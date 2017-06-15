@@ -26,14 +26,14 @@ author: yaof
 
 &emsp;&emsp;首先我们可以从Spring Web Flow官网找到Spring Web Flow源码[github](https://github.com/spring-projects/spring-webflow "https://github.com/spring-projects/spring-webflow")地址，然后通过找到补丁提交的源代码主要在[spring-webflow/src/main/java/org/springframework/webflow/mvc/view/AbstractMvcView.java](https://github.com/spring-projects/spring-webflow/compare/2.5.x#diff-d9efeba3700c0135e224911fadb39795 "https://github.com/spring-projects/spring-webflow/compare/2.5.x#diff-d9efeba3700c0135e224911fadb39795")文件中修改，查看和上一个版本的源码比较：
 
-[Spring]({{ site.baseurl }}/images/yaof_images/9.png) 
+[Spring]({{ site.baseurl }}/images/yaof_images/9.png)
 
 
 ### 3.2 &emsp;源码分析 ###
 
 &emsp;&emsp;我们发现这里对 addEmptyValueMapping(DefaultMapper mapper, String field, Object model) 这个方法里面表达式解析的实现类进行了替换，直接使用了BeanWrapperExpressionParser来解析，关于这个类我们后面再详细说，那么知道触发漏洞的函数后，我们就可以用MyEclipse来跟踪下函数调用栈，具体如下：
 
-<center>![Spring](images/yaof_images/10.png)</center>
+![Spring]({{ site.baseurl }}/images/yaof_images/10.png)
 
 &emsp;&emsp;通过调用关系我们可以发现一共有一下两个函数调用了addEmptyValueMapping方法
 
@@ -42,7 +42,7 @@ author: yaof
 
 &emsp;&emsp;这里通过调用关系我们可以大概的搞明白Spring WebFlow的执行顺序和流程，由flowcontroller决定将请求交给那个handler去执行具体的流程，这里我们需要知道当用户请求有视图状态处理时，会决定当前事件下一个执行的流程，同时对于配置文件中我们配置的view-state元素，如果我们指定了数据的model，那么它会自动进行数据绑定，xml结构如下(这里以官方的example中的book项目为例子):
 
-<center>![Spring](images/yaof_images/11.png)</center>
+![Spring]({{ site.baseurl }}/images/yaof_images/11.png)
 
 &emsp;&emsp;本次漏洞出现的原因就是在view-state节点中数据绑定上，我们继续跟踪addEmptyValueMapping方法的调用过程，这里通过eclipse我们可以发现bind方法间接的调用了addEmptyValueMapping函数，
 
