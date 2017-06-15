@@ -6,7 +6,7 @@ author: yaof
 
 # <center>Spring Web Flow 远程代码执行漏洞分析</center> #
 
-<center>![Spring]({{ site.baseurl }}/images/yaof_images/Spring.jpg)</center>
+![Spring]({{ site.baseurl }}/images/yaof_images/Spring.jpg)
 
 ## 1.&emsp;漏洞描述 ##
 
