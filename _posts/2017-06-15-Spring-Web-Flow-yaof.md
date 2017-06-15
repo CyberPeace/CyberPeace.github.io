@@ -26,7 +26,7 @@ author: yaof
 
 &emsp;&emsp;首先我们可以从Spring Web Flow官网找到Spring Web Flow源码[github](https://github.com/spring-projects/spring-webflow "https://github.com/spring-projects/spring-webflow")地址，然后通过找到补丁提交的源代码主要在[spring-webflow/src/main/java/org/springframework/webflow/mvc/view/AbstractMvcView.java](https://github.com/spring-projects/spring-webflow/compare/2.5.x#diff-d9efeba3700c0135e224911fadb39795 "https://github.com/spring-projects/spring-webflow/compare/2.5.x#diff-d9efeba3700c0135e224911fadb39795")文件中修改，查看和上一个版本的源码比较：
 
-<center> ![Spring]({{ site.baseurl }}/images/yaof_images/9.png) </center>
+![Spring]({{ site.baseurl }}/images/yaof_images/9.png) 
 
 
 ### 3.2 &emsp;源码分析 ###
