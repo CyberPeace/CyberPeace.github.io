@@ -1,3 +1,3 @@
 # README
 
-This project forked from **[Jekyll-Mono](https://github.com/AkshayAgarwal007/Jekyll-Mono)**.
+赛宁网安 **攻防实验室** 博客平台。
